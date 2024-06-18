@@ -33,7 +33,6 @@ public class ScriptServiceDeprecated {
 
     public ResponseEntity<CommonResponse> saveScript(ScriptRequest scriptRequest, String uid) {
 
-
         GuestEntity guestEntity = null;
         if (uid != null) {
             guestEntity = guestRepository.findById(uid).orElse(null);

@@ -119,7 +119,7 @@ public class AuthController {
 
         user.setRoles(roles);
 
-        user.setCoin(3);// TODO : 최초 가입시 제공받는 코인 갯수 차후 확장성있게 수정가능하도록 구현할 예쩡
+        user.setCoin(3); // TODO : 최초 가입시 제공받는 코인 갯수 차후 확장성있게 수정가능하도록 구현할 예쩡
         user.setLoginType(LoginType.LOCAL);
         userRepository.save(user);
 
