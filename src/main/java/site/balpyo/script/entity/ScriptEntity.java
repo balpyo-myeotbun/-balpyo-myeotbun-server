@@ -43,7 +43,7 @@ public class ScriptEntity {
     @JoinColumn(name = "uid")
     private GuestEntity guestEntity;
 
-    @Column(nullable = false)
+    @Column
     private Boolean isGenerating; // 작업 진행 중 여부를 나타내는 필드
 
 
