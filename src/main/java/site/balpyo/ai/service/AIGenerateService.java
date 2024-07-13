@@ -17,6 +17,8 @@ import site.balpyo.common.dto.ErrorEnum;
 import site.balpyo.common.util.CommonUtils;
 import site.balpyo.guest.entity.GuestEntity;
 import site.balpyo.guest.repository.GuestRepository;
+import site.balpyo.script.entity.ScriptEntity;
+import site.balpyo.script.repository.ScriptRepository;
 
 
 import java.util.Map;
@@ -35,6 +37,8 @@ public class AIGenerateService {
 
     private final GuestRepository guestRepository;
 
+    private final ScriptRepository scriptRepository;
+
     @Value("${secrets.GPT_API_KEY}")
     public String GPT_API_KEY;
     @Transactional
@@ -52,7 +56,6 @@ public class AIGenerateService {
         ResponseEntity<Map> generatedScriptObject = aiGenerateUtils.requestGPTTextGeneration(currentPromptString, 0.5f, 100000, CURRENT_GPT_API_KEY);
         //3. GPT응답을 기반으로 대본 추출 + 대본이 없다면 대본 생성 실패 에러 반환
         Object resultScript = generatedScriptObject.getBody().get("choices"); if(CommonUtils.isAnyParameterNullOrBlank(resultScript)) return CommonResponse.error(ErrorEnum.GPT_GENERATION_ERROR);
-
         //4. GPT 응답에서 Body 추출
         Object resultBody = generatedScriptObject.getBody();
         //5. GPT 응답에서 GPTInfoEntity 추출 및 jpa로 저장할 수 있도록 GPTInfoEntity로변환
@@ -61,17 +64,23 @@ public class AIGenerateService {
 
         GuestEntity guestEntity = null;
         Optional<GuestEntity> optionalGuestEntity= guestRepository.findById(uid);
-        if(optionalGuestEntity.isPresent()){
-            guestEntity = optionalGuestEntity.get();
-        }
+        if(optionalGuestEntity.isPresent()){guestEntity = optionalGuestEntity.get();}
+
 
         //6. AI 사용기록에 gpt정보와 요청값들을 AIGenerateLogEntity형태로 변환
         AIGenerateLogEntity aiGenerateLog = new AIGenerateLogEntity().convertToEntity(request , gptInfoData,guestEntity);
 
 
-
         aiGenerateLogRepository.save(aiGenerateLog); //저장
         String GPTId = aiGenerateLog.getGptInfoEntity().getGptInfoId();
+
+        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findById(request.getScriptId());
+        if(optionalScriptEntity.isEmpty()){return CommonResponse.error(ErrorEnum.GPT_GENERATION_ERROR);}
+
+        ScriptEntity selectedScriptEntity = optionalScriptEntity.get();
+        selectedScriptEntity.setIsGenerating(false);
+        selectedScriptEntity.setAiGenerateLogEntity(aiGenerateLog);
+        scriptRepository.save(selectedScriptEntity);
 
         log.info("-------------------- 저장된 사용 기록 : " + aiGenerateLog);
 

@@ -61,7 +61,7 @@ public class ScriptServiceDeprecated {
 
         scriptRepository.save(scriptEntity);
 
-        ScriptResponse scriptResponse = new ScriptResponse(null,scriptRequest.getScript(), scriptRequest.getGptId(),uid,scriptRequest.getTitle(),scriptRequest.getSecTime(),null);
+        ScriptResponse scriptResponse = new ScriptResponse(null,scriptRequest.getScript(), scriptRequest.getGptId(),uid,scriptRequest.getTitle(),scriptRequest.getSecTime(),null, scriptRequest.isUseAi(),scriptEntity.getIsGenerating());
 
         return CommonResponse.success(scriptResponse);
     }
@@ -83,6 +83,7 @@ public class ScriptServiceDeprecated {
                 .title(scriptEntity.getTitle())
                 .secTime(scriptEntity.getSecTime())
                       .voiceFilePath(scriptEntity.getVoiceFilePath())
+                      .isGenerating(scriptEntity.getIsGenerating())
                 .build();
 
         scriptResponses.add(scriptResponse);
@@ -124,7 +125,6 @@ public class ScriptServiceDeprecated {
         scriptEntity.setScript(scriptRequest.getScript());
         scriptEntity.setTitle(scriptRequest.getTitle());
         scriptEntity.setSecTime(scriptRequest.getSecTime());
-
 
 
         if (scriptRequest.getVoiceFilePath() != null && !scriptRequest.getVoiceFilePath().isEmpty()) {

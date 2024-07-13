@@ -8,6 +8,7 @@ import site.balpyo.common.dto.CommonResponse;
 import site.balpyo.common.dto.ErrorEnum;
 import site.balpyo.common.util.CommonUtils;
 import site.balpyo.script.dto.ScriptRequest;
+import site.balpyo.script.service.ScriptService;
 import site.balpyo.script.service.ScriptServiceDeprecated;
 
 @RestController
@@ -16,14 +17,15 @@ import site.balpyo.script.service.ScriptServiceDeprecated;
 @RequestMapping("/every/manage")
 public class EveryScriptController {
 
-    private final ScriptServiceDeprecated scriptService;
+    private final ScriptServiceDeprecated scriptServiceDeprecated;
+    private final ScriptService scriptService;
+
 
     @PostMapping("/script")
     public ResponseEntity<CommonResponse> saveScript(@RequestBody ScriptRequest scriptRequest,
                                                      @RequestHeader(value = "UID", required = false) String uid){
-
         if(CommonUtils.isAnyParameterNullOrBlank(uid)) return CommonResponse.error(ErrorEnum.BALPYO_UID_KEY_MISSING);
-        return scriptService.saveScript(scriptRequest, uid);
+        return scriptService.saveEmptyScript(scriptRequest, uid);
     }
 
     @GetMapping("/script/all")
@@ -33,12 +35,14 @@ public class EveryScriptController {
         return scriptService.getAllScript(uid);
     }
 
+
+
     @GetMapping("/script/detail/{scriptId}")
     public ResponseEntity<CommonResponse> getDetailScript(@RequestHeader(value = "UID", required = false) String uid,
     @PathVariable Long scriptId) {
 
         if (CommonUtils.isAnyParameterNullOrBlank(uid)) return CommonResponse.error(ErrorEnum.BALPYO_UID_KEY_MISSING);
-        return scriptService.getDetailScript(uid,scriptId);
+        return scriptServiceDeprecated.getDetailScript(uid,scriptId);
     }
 
     @PatchMapping("/script/detail/{scriptId}")
@@ -47,7 +51,7 @@ public class EveryScriptController {
                                                             @PathVariable Long scriptId){
 
         if(CommonUtils.isAnyParameterNullOrBlank(uid)) return CommonResponse.error(ErrorEnum.BALPYO_UID_KEY_MISSING);
-        return scriptService.patchScript(scriptRequest, uid,scriptId);
+        return scriptServiceDeprecated.patchScript(scriptRequest, uid,scriptId);
     }
 
     @DeleteMapping("/script/detail/{scriptId}")
@@ -55,7 +59,7 @@ public class EveryScriptController {
                                                             @PathVariable Long scriptId){
 
         if(CommonUtils.isAnyParameterNullOrBlank(uid)) return CommonResponse.error(ErrorEnum.BALPYO_UID_KEY_MISSING);
-        return scriptService.deleteScript(uid,scriptId);
+        return scriptServiceDeprecated.deleteScript(uid,scriptId);
     }
 
 }

@@ -10,6 +10,9 @@ import lombok.Data;
 @Data
 public class AIGenerateRequest {
 
+    @NotNull(message = "scriptId은 비어 있을 수 없습니다.")
+    private Long scriptId;
+
     @NotBlank(message = "Topic은 비어 있을 수 없습니다.")
     private String topic;
 

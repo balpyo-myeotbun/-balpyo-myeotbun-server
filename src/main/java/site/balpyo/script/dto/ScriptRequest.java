@@ -15,4 +15,5 @@ public class ScriptRequest {
     private String title;
     private Integer secTime;
     private String voiceFilePath;
+    private boolean useAi;
 }
