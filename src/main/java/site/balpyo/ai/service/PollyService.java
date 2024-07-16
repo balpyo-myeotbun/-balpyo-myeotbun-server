@@ -2,10 +2,9 @@ package site.balpyo.ai.service;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.polly.AmazonPolly;
-import com.amazonaws.services.polly.AmazonPollyClient;
+import com.amazonaws.services.polly.AmazonPollyClientBuilder;
 import com.amazonaws.services.polly.model.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AccessControlList;
@@ -59,12 +58,12 @@ public class PollyService {
         log.info("-------------------- 클라이언트가 요청한 대본 :" + inputText);
         log.info("-------------------- 클라이언트가 요청한 빠르기 :" + speed);
 
-        // Amazon Polly 클라이언트 생성
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(s3Client.getAccessKey(), s3Client.getSecretKey());
-        AmazonPolly amazonPolly = AmazonPollyClient.builder()
-                .withRegion(Regions.AP_NORTHEAST_2) // 서울 리전
+        AmazonPolly amazonPolly = AmazonPollyClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+                .withRegion(Regions.AP_NORTHEAST_2) // AWS 리전 설정
                 .build();
+
 
         // 빠르기 계산
         float relativeSpeed = calculateRelativeSpeed(speed);
