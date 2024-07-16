@@ -15,9 +15,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jaudiotagger.audio.mp3.MP3AudioHeader;
 import org.jaudiotagger.audio.mp3.MP3File;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import site.balpyo.ai.dto.PollyDTO;
+import site.balpyo.ai.dto.SynthesizeSpeechResultDTO;
 import site.balpyo.ai.dto.upload.UploadResultDTO;
 import site.balpyo.common.s3.S3Client;
 
@@ -28,9 +30,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author dongheonlee
@@ -76,22 +76,64 @@ public class PollyService {
         // SynthesizeSpeechRequest 생성 및 설정
         SynthesizeSpeechRequest synthesizeSpeechRequest = new SynthesizeSpeechRequest()
                 .withText(ssmlText)
+                .withTextType(TextType.Ssml)
                 .withOutputFormat(OutputFormat.Mp3) // MP3 형식
                 .withVoiceId(VoiceId.Seoyeon) // 한국어 음성 변환 보이스
                 .withTextType("ssml"); // SSML 형식 사용
-        
+
+        // Speech Marks 요청 설정
+        SynthesizeSpeechRequest speechMarkRequest = new SynthesizeSpeechRequest()
+                .withText(ssmlText)
+                .withTextType(TextType.Ssml)
+                .withVoiceId(VoiceId.Seoyeon)
+                .withOutputFormat(OutputFormat.Json) // JSON 형식으로 Speech Mark 정보 요청
+                .withSpeechMarkTypes(SpeechMarkType.Word);
+
+        // Speech Mark 정보 요청
+        InputStream inputStream = amazonPolly.synthesizeSpeech(speechMarkRequest).getAudioStream();
+
+        // Speech Marks 데이터를 담을 리스트
+        List<Map<String, Object>> speechMarksList = new ArrayList<>();
+
+        // 결과 처리 및 String으로 변환
+        try (Scanner scanner = new Scanner(inputStream, "UTF-8")) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                Map<String, Object> speechMarkData = getStringObjectMap(line);
+                System.out.println(line);
+
+                speechMarksList.add(speechMarkData);
+            }
+            // 현재 재생 시간을 밀리초 단위로 변환하고
+            // 프론트에서 현재 재생 시간이 단어의 시작 시간과 끝 시간 사이에 있을 때 텍스트 색칠하면..?
+        } catch (Exception e) {
+            log.error("Speech Mark 정보 읽기 실패: ", e);
+        }
+
         try { // 텍스트를 음성으로 변환하여 InputStream으로 반환
             SynthesizeSpeechResult synthesizeSpeechResult = amazonPolly.synthesizeSpeech(synthesizeSpeechRequest);
-
+            InputStream audioStream = synthesizeSpeechResult.getAudioStream();
             log.info("-------------------- 요청된 문자열 개수 : " + synthesizeSpeechResult.getRequestCharacters());
             log.info("-------------------- 음성변환 요청 성공");
 
-
-            return synthesizeSpeechResult.getAudioStream();
+            // SynthesizeSpeechResultDTO 인스턴스 생성 및 반환
+            return new SynthesizeSpeechResultDTO(audioStream, speechMarksList);
         } catch (AmazonPollyException e) {
             log.error("-------------------- 음성 변환 실패: " + e.getErrorMessage());
             throw e;
         }
+    }
+
+    private static Map<String, Object> getStringObjectMap(String line) {
+        JSONObject jsonObject = new JSONObject(line);
+
+        Map<String, Object> speechMarkData = new HashMap<>();
+        speechMarkData.put("time", jsonObject.getInt("time"));
+        speechMarkData.put("type", jsonObject.getString("type"));
+        speechMarkData.put("start", jsonObject.getInt("start"));
+        speechMarkData.put("end", jsonObject.getInt("end"));
+        speechMarkData.put("value", jsonObject.getString("value"));
+        return speechMarkData;
     }
 
     /**
@@ -123,21 +165,34 @@ public class PollyService {
         ssmlBuilder.append("<speak>");
         ssmlBuilder.append(String.format("<prosody rate=\"%f%%\">", relativeSpeed * 100));
 
-        for (char ch : inputText.toCharArray()) {
+
+        for (int i = 0; i < inputText.length(); i++) {
+            char ch = inputText.charAt(i);
+
             switch (ch) {
                 case ',':
                     // 쉼표일 때 숨쉬기 태그 추가
-                    ssmlBuilder.append("<break time=\"500ms\"/>");
+                    ssmlBuilder.append("<break time=\"400ms\"/>");
                     break;
                 case '.':
+                    ssmlBuilder.append("<break time=\"601ms\"/>");
+                    break;
                 case '!':
                     ssmlBuilder.append("<break time=\"600ms\"/>");
                     break;
                 case '?':
-                    ssmlBuilder.append("<break time=\"800ms\"/>");
+                    ssmlBuilder.append("<break time=\"801ms\"/>");
+                    break;
                 case '\n':
-                    // 마침표나 개행 문자일 때 조금 더 긴 일시정지
-                    ssmlBuilder.append("<break time=\"300ms\"/>");
+                    // 다음 문자가 개행 문자이면 숨소리 추가
+                    if (i + 1 < inputText.length() && inputText.charAt(i + 1) == '\n') {
+                        ssmlBuilder.append("<amazon:breath/>");
+                        // 이미 \n\n을 처리했으므로 추가로 하나 더 넘어감
+                        i++;
+                    } else {
+                        // 한 개의 개행 문자일 때 800ms 휴식 추가
+                        ssmlBuilder.append("<break time=\"800ms\"/>");
+                    }
                     break;
                 default:
                     // 기본 문자 처리
@@ -145,6 +200,7 @@ public class PollyService {
                     break;
             }
         }
+
 
         ssmlBuilder.append("</prosody>");
         ssmlBuilder.append("</speak>");
