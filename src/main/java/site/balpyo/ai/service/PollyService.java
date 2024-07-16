@@ -51,7 +51,7 @@ public class PollyService {
      * @param pollyDTO
      * @return mp3 오디오 파일
      */
-    public InputStream synthesizeSpeech(PollyDTO pollyDTO) {
+    public SynthesizeSpeechResultDTO synthesizeSpeech(PollyDTO pollyDTO) {
 
         String inputText = pollyDTO.getText();
         int speed = pollyDTO.getSpeed();
@@ -153,7 +153,11 @@ public class PollyService {
     }
 
     public UploadResultDTO synthesizeAndUploadSpeech(PollyDTO pollyDTO) {
-        InputStream audioStream = synthesizeSpeech(pollyDTO); // 음성 파일 생성
+
+        SynthesizeSpeechResultDTO synthesizeSpeechResultDTO = synthesizeSpeech(pollyDTO);
+        InputStream audioStream = synthesizeSpeechResultDTO.getAudioStream(); // 음성 파일 생성
+        List<Map<String, Object>> speechMarksList = synthesizeSpeechResultDTO.getSpeechMarks();
+
 
         // 파일 이름 생성
         String fileName = UUID.randomUUID() + ".mp3";
@@ -172,6 +176,7 @@ public class PollyService {
         return UploadResultDTO.builder()
                 .profileUrl(baseUploadURL)
                 .playTime(durationInSeconds)
+                .speechMarks(speechMarksList)
                 .build();
     }
 

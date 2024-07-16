@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import site.balpyo.ai.dto.PollyDTO;
+import site.balpyo.ai.dto.SynthesizeSpeechResultDTO;
 import site.balpyo.ai.dto.upload.UploadResultDTO;
 import site.balpyo.ai.service.PollyService;
 import site.balpyo.common.dto.CommonResponse;
@@ -56,21 +57,21 @@ public class PollyController {
 
         try {
             // Amazon Polly와 통합하여 텍스트를 음성으로 변환
-            InputStream audioStream = pollyService.synthesizeSpeech(pollyDTO);
+            SynthesizeSpeechResultDTO synthesizeSpeechResultDTO = pollyService.synthesizeSpeech(pollyDTO);
 
 
-            if (audioStream == null) {
-                log.error("Amazon Polly 음성 변환 실패: 반환된 오디오 스트림이 null입니다.");
+            if (synthesizeSpeechResultDTO.getAudioStream() == null || synthesizeSpeechResultDTO.getSpeechMarks() == null) {
+                log.error("Amazon Polly 음성 변환 실패: 반환된 오디오 정보가 null입니다.");
                 return CommonResponse.error(ErrorEnum.INTERNAL_SERVER_ERROR);
             }
 
             // InputStream을 byte 배열로 변환
-            byte[] audioBytes = IOUtils.toByteArray(audioStream);
+            byte[] audioBytes = IOUtils.toByteArray(synthesizeSpeechResultDTO.getAudioStream());
 
             // MP3 파일을 클라이언트에게 반환
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-            headers.setContentDispositionFormData("testAudio", "speech.mp3");
+            headers.setContentDispositionFormData("GeneratedAudio", "speech.mp3");
 
             return ResponseEntity.ok()
                     .headers(headers)
