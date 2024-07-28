@@ -10,6 +10,7 @@ src/main/resources/application.yml
 src/main/resources/keystore.p12
 .yml
 *.yml
+src/main/resources/firebase/
 
 ### STS ###
 .apt_generated
