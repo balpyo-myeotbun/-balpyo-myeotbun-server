@@ -1,5 +1,5 @@
 #Base image
-FROM openjdk:11-jdk
+FROM openjdk:17-jdk-alpine
 LABEL authors="이동헌"
 
 # 앱 디렉토리 생성
