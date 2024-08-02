@@ -1,6 +1,5 @@
 package site.balpyo.auth.security.jwt;
 
-
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -24,8 +23,9 @@ public class JwtUtils {
 
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
 
+        System.out.println(authentication);
         return Jwts.builder()
-                .setSubject((userPrincipal.getUsername()))
+                .setSubject((userPrincipal.getEmail()))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
                 .signWith(key(), SignatureAlgorithm.HS256)
@@ -46,13 +46,13 @@ public class JwtUtils {
             Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);
             return true;
         } catch (MalformedJwtException e) {
-            System.out.println("Invalid JWT token: {}"+ e.getMessage());
+            System.out.println("Invalid JWT token: " + e.getMessage());
         } catch (ExpiredJwtException e) {
-            System.out.println("JWT token is expired: {}"+ e.getMessage());
+            System.out.println("JWT token is expired: " + e.getMessage());
         } catch (UnsupportedJwtException e) {
-            System.out.println("JWT token is unsupported: {}"+ e.getMessage());
+            System.out.println("JWT token is unsupported: " + e.getMessage());
         } catch (IllegalArgumentException e) {
-            System.out.println("JWT claims string is empty: {}"+ e.getMessage());
+            System.out.println("JWT claims string is empty: " + e.getMessage());
         }
 
         return false;

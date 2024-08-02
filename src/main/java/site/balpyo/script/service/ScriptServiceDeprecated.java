@@ -8,6 +8,8 @@ import site.balpyo.ai.entity.AIGenerateLogEntity;
 import site.balpyo.ai.entity.GPTInfoEntity;
 import site.balpyo.ai.repository.AIGenerateLogRepository;
 import site.balpyo.ai.repository.GPTInfoRepository;
+import site.balpyo.auth.entity.User;
+import site.balpyo.auth.service.AuthenticationService;
 import site.balpyo.common.dto.CommonResponse;
 import site.balpyo.common.dto.ErrorEnum;
 import site.balpyo.guest.entity.GuestEntity;
@@ -30,13 +32,13 @@ public class ScriptServiceDeprecated {
     private final AIGenerateLogRepository aiGenerateLogRepository;
     private final GPTInfoRepository gptInfoRepository;
 
+    private final AuthenticationService authenticationService;
 
-    public ResponseEntity<CommonResponse> saveScript(ScriptRequest scriptRequest, String uid) {
+
+    public ResponseEntity<CommonResponse> saveScript(ScriptRequest scriptRequest) {
 
         GuestEntity guestEntity = null;
-        if (uid != null) {
-            guestEntity = guestRepository.findById(uid).orElse(null);
-        }
+        User user = authenticationService.authenticationToUser();
 
         GPTInfoEntity gptInfoEntity = null;
         if (scriptRequest.getGptId() != null) {
@@ -54,18 +56,18 @@ public class ScriptServiceDeprecated {
                 .title(scriptRequest.getTitle())
                 .script(scriptRequest.getScript())
                 .secTime(scriptRequest.getSecTime())
-                .guestEntity(guestEntity)
-                .aiGenerateLogEntity(aiGenerateLogEntity)
+                .user(user)
+                .aiGenerateLog(aiGenerateLogEntity)
                 .voiceFilePath(scriptRequest.getVoiceFilePath())
                 .build();
 
-        scriptRepository.save(scriptEntity);
 
-        ScriptResponse scriptResponse = new ScriptResponse(null,scriptRequest.getScript(), scriptRequest.getGptId(),uid,scriptRequest.getTitle(),scriptRequest.getSecTime(),null, scriptRequest.isUseAi(),scriptEntity.getIsGenerating());
+        ScriptEntity insertedScript = scriptRepository.save(scriptEntity);
 
-        return CommonResponse.success(scriptResponse);
+
+        return CommonResponse.success(insertedScript);
     }
-
+/*
     public ResponseEntity<CommonResponse> getAllScript(String uid) {
         Optional<GuestEntity> guestEntity = guestRepository.findById(uid);
 
@@ -92,9 +94,14 @@ public class ScriptServiceDeprecated {
         return CommonResponse.success(scriptResponses);
 
     }
+    */
 
-    public ResponseEntity<CommonResponse> getDetailScript(String uid, Long scriptId) {
-        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findScriptByGuestUidAndScriptId(uid,scriptId);
+
+    public ResponseEntity<CommonResponse> getDetailScript(Long scriptId) {
+
+        User user = authenticationService.authenticationToUser();
+
+        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findByUserAndScriptId(user,scriptId);
 
         if(optionalScriptEntity.isEmpty())return CommonResponse.error(ErrorEnum.SCRIPT_DETAIL_NOT_FOUND);
 
@@ -102,9 +109,8 @@ public class ScriptServiceDeprecated {
 
         ScriptResponse scriptResponse = ScriptResponse
                 .builder()
-                .scriptId(scriptEntity.getScript_id())
+                .scriptId(scriptEntity.getScriptId())
                 .secTime(scriptEntity.getSecTime())
-                .uid(scriptEntity.getGuestEntity().getUid())
                 .title(scriptEntity.getTitle())
                 .script(scriptEntity.getScript())
                 .voiceFilePath(scriptEntity.getVoiceFilePath())
@@ -114,18 +120,19 @@ public class ScriptServiceDeprecated {
 
 
     }
-    public ResponseEntity<CommonResponse> patchScript(ScriptRequest scriptRequest, String uid,Long scriptId) {
-        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findScriptByGuestUidAndScriptId(uid, scriptId);
+    public ResponseEntity<CommonResponse> patchScript(ScriptRequest scriptRequest,Long scriptId) {
+
+        User user = authenticationService.authenticationToUser();
+
+        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findByUserAndScriptId(user, scriptId);
 
         if(optionalScriptEntity.isEmpty())return CommonResponse.error(ErrorEnum.SCRIPT_DETAIL_NOT_FOUND);
 
         ScriptEntity scriptEntity = optionalScriptEntity.get();
 
-
         scriptEntity.setScript(scriptRequest.getScript());
         scriptEntity.setTitle(scriptRequest.getTitle());
         scriptEntity.setSecTime(scriptRequest.getSecTime());
-
 
         if (scriptRequest.getVoiceFilePath() != null && !scriptRequest.getVoiceFilePath().isEmpty()) {
             scriptEntity.setVoiceFilePath(scriptRequest.getVoiceFilePath());
@@ -135,12 +142,13 @@ public class ScriptServiceDeprecated {
 
         return CommonResponse.success("");
 
-
     }
 
 
-    public ResponseEntity<CommonResponse> deleteScript(String uid, Long scriptId) {
-        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findScriptByGuestUidAndScriptId(uid, scriptId);
+    public ResponseEntity<CommonResponse> deleteScript(Long scriptId) {
+        User user = authenticationService.authenticationToUser();
+
+        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findByUserAndScriptId(user, scriptId);
 
         if(optionalScriptEntity.isEmpty())return CommonResponse.error(ErrorEnum.SCRIPT_DETAIL_NOT_FOUND);
 
@@ -151,4 +159,6 @@ public class ScriptServiceDeprecated {
         return CommonResponse.success("");
 
     }
+
+
 }

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>UID Verification</title>
+    <script th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            const uid = /*[[${uid}]]*/ 'default-uid';
+
+            fetch('/api/auth/verify', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({ uid: uid })
+            })
+                .then(response => {
+                    const contentElement = document.getElementById('content');
+                    if (response.ok) {
+                        contentElement.innerHTML = '<h1>Success! This is A Page.</h1>';
+                    } else {
+                        contentElement.innerHTML = '<h1>Failure! This is B Page.</h1>';
+                    }
+                })
+                .catch(error => {
+                    const contentElement = document.getElementById('content');
+                    contentElement.innerHTML = '<h1>Failure! This is B Page.</h1>';
+                });
+        });
+    </script>
+</head>
+<body>
+<div id="content">
+    <h1>로딩중...</h1>
+</div>
+</body>
+</html>

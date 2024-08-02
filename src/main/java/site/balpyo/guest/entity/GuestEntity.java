@@ -25,12 +25,5 @@ public class GuestEntity {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "guestEntity", cascade = CascadeType.ALL)
-    private List<AIGenerateLogEntity> aiGenerateLogEntities;
-
-    @OneToMany(mappedBy = "guestEntity")
-    private List<ScriptEntity> scriptEntities;
-
-    private Integer coin;
 
 }

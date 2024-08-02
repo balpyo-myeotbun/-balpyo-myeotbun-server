@@ -5,12 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.stereotype.Service;
 import site.balpyo.ai.dto.GPTResponse;
 
-import javax.annotation.processing.Completion;
-
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -40,17 +39,16 @@ public class GPTInfoEntity {
 
     private Integer totalToken;
 
-    @OneToOne(mappedBy = "gptInfoEntity")
-    private AIGenerateLogEntity aiGenerateLogEntity;
-
     @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "gptInfoEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AIGenerateLogEntity> aiGenerateLogs = new ArrayList<>();
 
     public GPTInfoEntity ResponseBodyToGPTInfoEntity(Object resultBody){
 
         ObjectMapper mapper = new ObjectMapper();
         GPTResponse response = mapper.convertValue(resultBody, GPTResponse.class);
-
 
         return GPTInfoEntity.builder()
                 .gptInfoId(response.getGptInfoId())

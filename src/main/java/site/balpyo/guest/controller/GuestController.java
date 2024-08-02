@@ -22,7 +22,6 @@ public class GuestController {
 
     @GetMapping("/uid")
     public ResponseEntity<CommonResponse> verifyUID(@RequestHeader(value = "UID", required = false) String uid){
-        if(CommonUtils.isAnyParameterNullOrBlank(uid))return CommonResponse.error(ErrorEnum.BALPYO_UID_KEY_MISSING);
         return guestService.verifyUID(uid);
     }
 

@@ -3,12 +3,16 @@ package site.balpyo.auth.controller;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import site.balpyo.auth.EmailConfig;
 import site.balpyo.auth.dto.request.LoginRequest;
 import site.balpyo.auth.dto.request.SignupRequest;
 import site.balpyo.auth.dto.response.JwtResponse;
@@ -20,12 +24,15 @@ import site.balpyo.auth.entity.User;
 import site.balpyo.auth.repository.RoleRepository;
 import site.balpyo.auth.repository.UserRepository;
 import site.balpyo.auth.security.jwt.JwtUtils;
+import site.balpyo.auth.service.EmailService;
+import site.balpyo.auth.service.RandomAdjectiveAnimalGenerator;
 import site.balpyo.auth.service.UserDetailsImpl;
+import site.balpyo.common.dto.CommonResponse;
+import site.balpyo.common.dto.ErrorEnum;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*")
@@ -37,6 +44,8 @@ public class AuthController {
 
     @Autowired
     UserRepository userRepository;
+    @Autowired
+    EmailService emailService;
 
     @Autowired
     RoleRepository roleRepository;
@@ -47,11 +56,14 @@ public class AuthController {
     @Autowired
     JwtUtils jwtUtils;
 
+    @Autowired
+    EmailConfig emailConfig;
+
     @PostMapping("/signin")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtils.generateJwtToken(authentication);
@@ -70,7 +82,6 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signUpRequest) {
-        System.out.println("==========이메일=========="+signUpRequest.getEmail());
 
         if (userRepository.existsByUsername(signUpRequest.getUsername())) {
             return ResponseEntity
@@ -84,46 +95,72 @@ public class AuthController {
                     .body(new MessageResponse("Error: Email is already in use!"));
         }
 
-        // Create new user's account
+        //새로운 유저 생성
         User user = new User(signUpRequest.getUsername(),
                 signUpRequest.getEmail(),
                 encoder.encode(signUpRequest.getPassword()));
 
-        Set<String> strRoles = signUpRequest.getRole();
+
         Set<Role> roles = new HashSet<>();
 
-        if (strRoles == null || strRoles.isEmpty()) {
-            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+            Role userRole = roleRepository.findByName(ERole.ROLE_UNVERIFIED_USER)
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
             roles.add(userRole);
-        } else {
-            strRoles.forEach(role -> {
-                switch (role) {
-                    case "admin":
-                        Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(adminRole);
-                        break;
-                    case "mod":
-                        Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(modRole);
-                        break;
-                    default:
-                        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                }
-            });
-        }
 
         user.setRoles(roles);
-
         user.setCoin(3); // TODO : 최초 가입시 제공받는 코인 갯수 차후 확장성있게 수정가능하도록 구현할 예쩡
         user.setLoginType(LoginType.LOCAL);
-        userRepository.save(user);
+
+        if(signUpRequest.getUsername()==null){
+            user.setUsername(new RandomAdjectiveAnimalGenerator().generateNickname());
+        }else{
+            user.setUsername(signUpRequest.getUsername());
+        }
+
+        System.out.println("user :"+user.toString());
+        User insertedUser = userRepository.save(user);
+
+        // 서버의 IP 주소를 가져옵니다.
+        String serverIpAddress = "";
+        try {
+            InetAddress inetAddress = InetAddress.getLocalHost();
+            serverIpAddress = inetAddress.getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
+        String verificationUrl = "http://" + serverIpAddress + ":port/api/auth/verify?uid=" + insertedUser.getVerifyCode(); // 포트 번호를 적절히 수정하십시오.
+
+
+        emailService.sendEmail(signUpRequest.getEmail(), emailConfig.getBalpyoTitle(), emailConfig.getBalpyoBody(verificationUrl));
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
+
+    @GetMapping("/verify")
+    public ResponseEntity<CommonResponse> checkUserVerify(@RequestParam("uid") String uid) {
+        Optional<User> optionalUser = userRepository.findByVerifyCode(uid);
+        if(optionalUser.isPresent()){
+            Set<Role> roles = new HashSet<>();
+            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
+                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+            roles.add(userRole);
+
+            User user = optionalUser.get();
+            user.setRoles(roles);
+
+            userRepository.save(user);
+
+            return CommonResponse.success("");
+        }else{
+            return CommonResponse.error(ErrorEnum.GUEST_NOT_FOUND);
+        }
+    }
+
+
+
+
+
+
 
 }

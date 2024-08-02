@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -71,13 +72,15 @@ public class WebSecurityConfig { // extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
+
+
 //  @Override
 //  protected void configure(HttpSecurity http) throws Exception {
 //    http.cors().and().csrf().disable()
 //      .exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
 //      .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 //      .authorizeRequests().antMatchers("/api/auth/**").permitAll()
-//      .antMatchers("/api/test/**").permitAll()
+//      .antMatchers("*").permitAll()
 //      .anyRequest().authenticated();
 //
 //    http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -97,6 +100,8 @@ public class WebSecurityConfig { // extends WebSecurityConfigurerAdapter {
         source.registerCorsConfiguration("/**", config);
         return source;
     }
+
+
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

@@ -11,19 +11,13 @@ import java.util.Set;
 @Getter
 @Setter
 public class SignupRequest {
-    @NotBlank
-    @Size(min = 3, max = 20)
+
     private String username;
 
-    @NotBlank
-    @Size(max = 50)
-    @Email
+    @NotBlank(message = "이메일은 공백일 수 없습니다")
     private String email;
 
-    private Set<String> role;
-
-    @NotBlank
-    @Size(min = 6, max = 40)
+    @NotBlank(message = "비밀번호는 공백일 수 없습니다")
     private String password;
 
 

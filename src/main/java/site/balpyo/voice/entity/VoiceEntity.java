@@ -2,6 +2,7 @@ package site.balpyo.voice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import site.balpyo.script.entity.ScriptEntity;
 
 @Getter
 @Setter
@@ -14,15 +15,18 @@ public class VoiceEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long voice_id;
+    private Long voiceId;
 
     @Column
-    private String file_path;
+    private String filePath;
 
     @Column
-    private Integer play_time;
+    private Integer playTime;
 
     @Column
-    private String speech_mark;
+    private String speechMark;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "script_id")
+    private ScriptEntity scriptEntity;
 }

@@ -14,6 +14,10 @@ public class RoleDataLoader implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        if (roleRepository.findByName(ERole.ROLE_UNVERIFIED_USER).isEmpty()) {
+            roleRepository.save(new Role(ERole.ROLE_UNVERIFIED_USER));
+        }
+
         if (roleRepository.findByName(ERole.ROLE_USER).isEmpty()) {
             roleRepository.save(new Role(ERole.ROLE_USER));
         }

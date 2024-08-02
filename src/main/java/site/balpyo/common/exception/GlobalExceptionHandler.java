@@ -1,5 +1,6 @@
 package site.balpyo.common.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -9,10 +10,13 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import site.balpyo.common.ErrorLogRepository;
 import site.balpyo.common.dto.CommonResponse;
 import site.balpyo.common.entity.ErrorLogEntity;
 
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -52,20 +56,34 @@ public class GlobalExceptionHandler {
 
         // 예외 메시지 가져오기
         String errorMessage = ex.getMessage();
+
+        // HttpServletRequest 가져오기
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+
+        // 엔드포인트 정보 가져오기
+        String endpoint = request.getRequestURI();
+
+        // 요청 인자 가져오기
+        Map<String, String[]> parameterMap = request.getParameterMap();
+        String parameters = parameterMap.entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + String.join(",", entry.getValue()))
+                .collect(Collectors.joining("&"));
+
+        // ErrorLogEntity 빌드
         ErrorLogEntity errorLogEntity = ErrorLogEntity.builder()
                 .errorText(ex.getMessage())
                 .className(className)
                 .methodName(methodName)
                 .lineNumber(lineNumber)
+                .endpoint(endpoint)
+                .parameters(parameters)
                 .build();
 
-
+        // 로그 저장
         errorLogRepository.save(errorLogEntity);
-
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new CommonResponse("9999", errorMessage, ""));
-    }
+                .body(new CommonResponse("9999", errorMessage, "")); }
 
 }

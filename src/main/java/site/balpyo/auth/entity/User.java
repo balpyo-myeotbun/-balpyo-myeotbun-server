@@ -1,15 +1,15 @@
 package site.balpyo.auth.entity;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+import site.balpyo.ai.entity.AIGenerateLogEntity;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 @Table(name = "users",
@@ -17,10 +17,11 @@ import java.util.Set;
                 @UniqueConstraint(columnNames = "username"),
                 @UniqueConstraint(columnNames = "email")
         })
-
 @Getter
 @Setter
+@ToString
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,26 +39,29 @@ public class User {
     @Size(max = 120)
     private String password;
 
-
     private Integer coin;
+
+    private String verifyCode;
 
     @Enumerated(EnumType.STRING)
     private LoginType loginType;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(  name = "user_roles",
+    @JoinTable(name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
-    public User() {
+    @PrePersist
+    protected void onCreate() {
+        this.verifyCode = UUID.randomUUID().toString();
     }
+
+    public User() {}
 
     public User(String username, String email, String password) {
         this.username = username;
         this.email = email;
         this.password = password;
     }
-
-
 }

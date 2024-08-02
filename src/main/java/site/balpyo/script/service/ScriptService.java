@@ -8,6 +8,8 @@ import site.balpyo.ai.entity.AIGenerateLogEntity;
 import site.balpyo.ai.entity.GPTInfoEntity;
 import site.balpyo.ai.repository.AIGenerateLogRepository;
 import site.balpyo.ai.repository.GPTInfoRepository;
+import site.balpyo.auth.entity.User;
+import site.balpyo.auth.service.AuthenticationService;
 import site.balpyo.common.dto.CommonResponse;
 import site.balpyo.common.dto.ErrorEnum;
 import site.balpyo.guest.entity.GuestEntity;
@@ -29,27 +31,25 @@ public class ScriptService {
     private final GuestRepository guestRepository;
     private final AIGenerateLogRepository aiGenerateLogRepository;
     private final GPTInfoRepository gptInfoRepository;
+    private final AuthenticationService authenticationService;
 
 
-    public ResponseEntity<CommonResponse> saveEmptyScript(ScriptRequest scriptRequest, String uid) {
+    public ResponseEntity<CommonResponse> saveEmptyScript(ScriptRequest scriptRequest) {
 
-        GuestEntity guestEntity = null;
-        if (uid != null) {
-            guestEntity = guestRepository.findById(uid).orElse(null);
-        }
+        User user = authenticationService.authenticationToUser();
 
         ScriptEntity scriptEntity = ScriptEntity.builder()
                 .title(scriptRequest.getTitle())
                 .script(scriptRequest.getScript())
                 .secTime(scriptRequest.getSecTime())
-                .guestEntity(guestEntity)
+                .user(user)
                 .isGenerating(scriptRequest.isUseAi())
                 .build();
 
 
         ScriptEntity insertedScriptEntity = scriptRepository.save(scriptEntity);
         ScriptResponse scriptResponse = ScriptResponse.builder()
-                .scriptId(insertedScriptEntity.getScript_id())
+                .scriptId(insertedScriptEntity.getScriptId())
                 .isGenerating(insertedScriptEntity.getIsGenerating())
                 .build();
 
@@ -57,22 +57,22 @@ public class ScriptService {
     }
 
     public ResponseEntity<CommonResponse> getAllScript(String uid) {
-        Optional<GuestEntity> guestEntity = guestRepository.findById(uid);
+        User user = authenticationService.authenticationToUser();
 
-        if(guestEntity.isEmpty())return CommonResponse.error(ErrorEnum.GUEST_NOT_FOUND);
+        List<ScriptEntity> scriptEntities = scriptRepository.findAllByUserAndIsGeneratingIsFalse(user);
+
+
         List<ScriptResponse> scriptResponses = new ArrayList<>();
-        if(guestEntity.get().getScriptEntities().isEmpty())return CommonResponse.success(scriptResponses);
-        List<ScriptEntity> scriptEntities = scriptRepository.findAllByGuestEntityUidAndIsGeneratingFalse(uid);
-
 
         for(ScriptEntity scriptEntity: scriptEntities){
             ScriptResponse scriptResponse = ScriptResponse.builder()
-                    .scriptId(scriptEntity.getScript_id())
+                    .scriptId(scriptEntity.getScriptId())
                     .uid(uid)
                     .title(scriptEntity.getTitle())
                     .secTime(scriptEntity.getSecTime())
                     .voiceFilePath(scriptEntity.getVoiceFilePath())
                     .isGenerating(scriptEntity.getIsGenerating())
+                    .script(scriptEntity.getScript())
                     .build();
 
             scriptResponses.add(scriptResponse);
@@ -83,8 +83,10 @@ public class ScriptService {
     }
 
 
-    public ResponseEntity<CommonResponse> patchScript(ScriptRequest scriptRequest, String uid,Long scriptId) {
-        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findScriptByGuestUidAndScriptId(uid, scriptId);
+    public ResponseEntity<CommonResponse> patchScript(ScriptRequest scriptRequest,Long scriptId) {
+        User user = authenticationService.authenticationToUser();
+
+        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findByUserAndScriptId(user, scriptId);
 
         if(optionalScriptEntity.isEmpty())return CommonResponse.error(ErrorEnum.SCRIPT_DETAIL_NOT_FOUND);
 
@@ -110,7 +112,10 @@ public class ScriptService {
 
 
     public ResponseEntity<CommonResponse> deleteScript(String uid, Long scriptId) {
-        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findScriptByGuestUidAndScriptId(uid, scriptId);
+
+        User user = authenticationService.authenticationToUser();
+
+        Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findByUserAndScriptId(user, scriptId);
 
         if(optionalScriptEntity.isEmpty())return CommonResponse.error(ErrorEnum.SCRIPT_DETAIL_NOT_FOUND);
 

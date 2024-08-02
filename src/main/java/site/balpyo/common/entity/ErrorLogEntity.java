@@ -26,6 +26,8 @@ public class ErrorLogEntity {
         private String className;
         private String methodName;
         private Integer lineNumber;
+        private String endpoint;
+        private String parameters;
 
         @CreationTimestamp
         private LocalDateTime createdAt;

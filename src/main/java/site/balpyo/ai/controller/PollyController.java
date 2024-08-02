@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,6 +48,7 @@ public class PollyController {
      * @return 호출 시, 요청정보에 따른 mp3 음성파일을 반환(audioBytes)한다.
      */
     @PostMapping("/generateAudio")
+    @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
     public ResponseEntity<?> synthesizeText(@RequestBody PollyDTO pollyDTO) {
 
         log.info("--------------------controller로 텍스트 음성 변환 요청");
