@@ -4,12 +4,15 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import site.balpyo.ai.entity.AIGenerateLogEntity;
+import site.balpyo.auth.entity.Role;
 import site.balpyo.auth.entity.User;
 import site.balpyo.voice.entity.VoiceEntity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -18,6 +21,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class ScriptEntity {
 
     @Id
@@ -39,6 +43,14 @@ public class ScriptEntity {
 
     @Column(nullable = false)
     private Boolean isGenerating;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "tags_scripts",
+            joinColumns = @JoinColumn(name = "script_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private Set<Tag> tags = new HashSet<>();
 
     @OneToOne(mappedBy = "scriptEntity", cascade = CascadeType.ALL, orphanRemoval = true)
     private AIGenerateLogEntity aiGenerateLog;

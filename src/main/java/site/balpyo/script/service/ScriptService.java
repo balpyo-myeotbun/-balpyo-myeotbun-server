@@ -16,12 +16,14 @@ import site.balpyo.guest.entity.GuestEntity;
 import site.balpyo.guest.repository.GuestRepository;
 import site.balpyo.script.dto.ScriptRequest;
 import site.balpyo.script.dto.ScriptResponse;
+import site.balpyo.script.entity.ETag;
 import site.balpyo.script.entity.ScriptEntity;
+import site.balpyo.script.entity.Tag;
 import site.balpyo.script.repository.ScriptRepository;
+import site.balpyo.script.repository.TagRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,11 +34,36 @@ public class ScriptService {
     private final AIGenerateLogRepository aiGenerateLogRepository;
     private final GPTInfoRepository gptInfoRepository;
     private final AuthenticationService authenticationService;
-
+    private final TagRepository tagRepository;
 
     public ResponseEntity<CommonResponse> saveEmptyScript(ScriptRequest scriptRequest) {
 
         User user = authenticationService.authenticationToUser();
+
+        Set<Tag> tags = new HashSet<>();
+
+        List<String> reqTags = scriptRequest.getTag() != null ? scriptRequest.getTag() : new ArrayList<>();
+        for (String tag : reqTags) {
+            ETag eTag = ETag.valueOf(tag);
+            switch (eTag) {
+                case NOTE:
+                    tags.add(tagRepository.findByTag(ETag.NOTE).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.NOTE)));
+                    break;
+                case TIME:
+                    tags.add(tagRepository.findByTag(ETag.TIME).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.TIME)));
+                    break;
+                case SCRIPT:
+                    tags.add(tagRepository.findByTag(ETag.SCRIPT).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.SCRIPT)));
+                    break;
+                case FLOW:
+                    tags.add(tagRepository.findByTag(ETag.FLOW).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.FLOW)));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown tag: " + tag);
+            }
+        }
+
+
 
         ScriptEntity scriptEntity = ScriptEntity.builder()
                 .title(scriptRequest.getTitle())
@@ -44,14 +71,22 @@ public class ScriptService {
                 .secTime(scriptRequest.getSecTime())
                 .user(user)
                 .isGenerating(scriptRequest.isUseAi())
+                .tags(tags)
                 .build();
 
 
         ScriptEntity insertedScriptEntity = scriptRepository.save(scriptEntity);
+
+
         ScriptResponse scriptResponse = ScriptResponse.builder()
                 .scriptId(insertedScriptEntity.getScriptId())
                 .isGenerating(insertedScriptEntity.getIsGenerating())
+                .tag(insertedScriptEntity.getTags().stream()
+                        .map(tag -> tag.getTag().toString())
+                        .collect(Collectors.toSet()))
                 .build();
+
+        System.out.println(insertedScriptEntity.getTags().toString());
 
         return CommonResponse.success(scriptResponse);
     }
@@ -64,7 +99,11 @@ public class ScriptService {
 
         List<ScriptResponse> scriptResponses = new ArrayList<>();
 
+
+
         for(ScriptEntity scriptEntity: scriptEntities){
+
+            System.out.println("TAGS : "+scriptEntity.getTags());
             ScriptResponse scriptResponse = ScriptResponse.builder()
                     .scriptId(scriptEntity.getScriptId())
                     .uid(uid)
@@ -73,6 +112,10 @@ public class ScriptService {
                     .voiceFilePath(scriptEntity.getVoiceFilePath())
                     .isGenerating(scriptEntity.getIsGenerating())
                     .script(scriptEntity.getScript())
+                    .tag(scriptEntity.getTags().stream()
+                            .map(tag -> tag.getTag().toString())
+                            .collect(Collectors.toSet())
+                    )
                     .build();
 
             scriptResponses.add(scriptResponse);
@@ -86,17 +129,46 @@ public class ScriptService {
     public ResponseEntity<CommonResponse> patchScript(ScriptRequest scriptRequest,Long scriptId) {
         User user = authenticationService.authenticationToUser();
 
+
+
         Optional<ScriptEntity> optionalScriptEntity = scriptRepository.findByUserAndScriptId(user, scriptId);
 
         if(optionalScriptEntity.isEmpty())return CommonResponse.error(ErrorEnum.SCRIPT_DETAIL_NOT_FOUND);
 
         ScriptEntity scriptEntity = optionalScriptEntity.get();
 
+        Set<Tag> tags = new HashSet<>();
 
+        for (String tag : scriptRequest.getTag()) {
+            ETag eTag = ETag.valueOf(tag);
+            switch (eTag) {
+                case NOTE:
+                    tags.add(tagRepository.findByTag(ETag.NOTE).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.NOTE)));
+                    break;
+                case TIME:
+                    tags.add(tagRepository.findByTag(ETag.TIME).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.TIME)));
+                    break;
+                case SCRIPT:
+                    tags.add(tagRepository.findByTag(ETag.SCRIPT).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.SCRIPT)));
+                    break;
+                case FLOW:
+                    tags.add(tagRepository.findByTag(ETag.FLOW).orElseThrow(() -> new IllegalArgumentException("Tag not found: " + ETag.FLOW)));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown tag: " + tag);
+            }
+        }
         scriptEntity.setScript(scriptRequest.getScript());
         scriptEntity.setTitle(scriptRequest.getTitle());
         scriptEntity.setSecTime(scriptRequest.getSecTime());
 
+        Set<Tag> existedtags = scriptEntity.getTags();
+
+        for(Tag tag : existedtags){
+            tags.add(tag);
+        }
+
+        scriptEntity.setTags(tags);
 
 
         if (scriptRequest.getVoiceFilePath() != null && !scriptRequest.getVoiceFilePath().isEmpty()) {

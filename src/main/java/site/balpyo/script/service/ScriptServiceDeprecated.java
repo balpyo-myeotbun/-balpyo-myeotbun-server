@@ -134,6 +134,7 @@ public class ScriptServiceDeprecated {
         scriptEntity.setTitle(scriptRequest.getTitle());
         scriptEntity.setSecTime(scriptRequest.getSecTime());
 
+
         if (scriptRequest.getVoiceFilePath() != null && !scriptRequest.getVoiceFilePath().isEmpty()) {
             scriptEntity.setVoiceFilePath(scriptRequest.getVoiceFilePath());
         }

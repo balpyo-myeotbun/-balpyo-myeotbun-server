@@ -1,11 +1,17 @@
 package site.balpyo.script.dto;
 
 import lombok.*;
+import site.balpyo.script.entity.Tag;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class ScriptResponse {
 
         private Long scriptId;
@@ -17,5 +23,6 @@ public class ScriptResponse {
         private String voiceFilePath;
         private boolean isGenerating;
         private boolean useAi;
+        private Set<String> tag;
 
 }

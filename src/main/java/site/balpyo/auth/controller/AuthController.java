@@ -131,7 +131,6 @@ public class AuthController {
 
         String verificationUrl = "http://" + serverIpAddress + ":port/api/auth/verify?uid=" + insertedUser.getVerifyCode(); // 포트 번호를 적절히 수정하십시오.
 
-
         emailService.sendEmail(signUpRequest.getEmail(), emailConfig.getBalpyoTitle(), emailConfig.getBalpyoBody(verificationUrl));
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
