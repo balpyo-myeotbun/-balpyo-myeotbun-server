@@ -75,6 +75,9 @@ dependencies {
 	implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.2.2'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+	// Spring WebFlux dependency
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
 }
 
 tasks.named('test') {

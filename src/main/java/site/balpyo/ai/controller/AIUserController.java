@@ -6,14 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import site.balpyo.ai.dto.AIGenerateRequest;
 import site.balpyo.ai.service.AIGenerateService;
 import site.balpyo.common.dto.CommonResponse;
-import site.balpyo.common.dto.ErrorEnum;
-import site.balpyo.common.util.CommonUtils;
+
+import reactor.core.publisher.Mono;
+
 
 
 
@@ -31,11 +30,11 @@ public class AIUserController {
 
     @PostMapping("/script")
     @PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
-    public ResponseEntity<CommonResponse> generateScript(@Valid @RequestBody AIGenerateRequest aiGenerateRequest){
+    public Mono<ResponseEntity<CommonResponse>> generateScript(@Valid @RequestBody AIGenerateRequest aiGenerateRequest){
 
-        log.info("-------------------- 스크립트 생성 요청");
-        log.info("-------------------- 요청 내용 ");
-        log.info("--------------------" + aiGenerateRequest);
+        log.info("-------------------- Requested Generate Script");
+        log.info("-------------------- Request Topic : " + aiGenerateRequest.getTopic());
+        log.info("-------------------- Request Keywords : " + aiGenerateRequest.getKeywords());
 
         return aiGenerateService.generateScript(aiGenerateRequest);
     }

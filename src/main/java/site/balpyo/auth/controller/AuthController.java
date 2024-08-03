@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class AuthController {
     @Autowired
     AuthenticationManager authenticationManager;
@@ -120,16 +120,16 @@ public class AuthController {
         System.out.println("user :"+user.toString());
         User insertedUser = userRepository.save(user);
 
-        // 서버의 IP 주소를 가져옵니다.
-        String serverIpAddress = "";
-        try {
-            InetAddress inetAddress = InetAddress.getLocalHost();
-            serverIpAddress = inetAddress.getHostAddress();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        }
+        // // 서버의 IP 주소를 가져옵니다.
+        // String serverIpAddress = "";
+        // try {
+        //     InetAddress inetAddress = InetAddress.getLocalHost();
+        //     serverIpAddress = inetAddress.getHostAddress();
+        // } catch (UnknownHostException e) {
+        //     e.printStackTrace();
+        // }
 
-        String verificationUrl = "http://" + serverIpAddress + ":port/api/auth/verify?uid=" + insertedUser.getVerifyCode(); // 포트 번호를 적절히 수정하십시오.
+        String verificationUrl = "https://balpyo.site" + "/api/verify?uid=" + insertedUser.getVerifyCode(); // 포트 번호를 적절히 수정하십시오.
 
         emailService.sendEmail(signUpRequest.getEmail(), emailConfig.getBalpyoTitle(), emailConfig.getBalpyoBody(verificationUrl));
 

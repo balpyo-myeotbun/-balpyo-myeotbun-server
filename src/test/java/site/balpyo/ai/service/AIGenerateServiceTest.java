@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.HttpBody;
 import com.google.api.HttpBodyOrBuilder;
+
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,7 +53,8 @@ class AIGenerateServiceTest {
         HttpEntity<LoginRequest> entity = new HttpEntity<>(request, headers);
 
         ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signin", entity, String.class);
-
+        System.out.println("response--------------------");
+        System.out.println("response : " + response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
 
