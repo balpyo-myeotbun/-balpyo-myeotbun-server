@@ -52,7 +52,7 @@ class AIGenerateServiceTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<LoginRequest> entity = new HttpEntity<>(request, headers);
 
-        ResponseEntity<String> response = restTemplate.postForEntity("/api/auth/signin", entity, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity("/auth/signin", entity, String.class);
         System.out.println("response--------------------");
         System.out.println("response : " + response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
