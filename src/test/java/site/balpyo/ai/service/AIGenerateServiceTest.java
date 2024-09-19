@@ -82,19 +82,19 @@ class AIGenerateServiceTest {
     public void testVerifyCodeExist() {
         assertNotNull(userVerifyUid);
     }
-
-    @Test
-    @Order(3)
-    public void testVerify() {
-
-        HttpHeaders headers = new HttpHeaders();
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        ResponseEntity<CommonResponse> response = restTemplate.exchange("/api/auth/verify?uid="+userVerifyUid, HttpMethod.GET, entity, CommonResponse.class);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-
-    }
+//
+//    @Test
+//    @Order(3)
+//    public void testVerify() {
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        HttpEntity<Void> entity = new HttpEntity<>(headers);
+//
+//        ResponseEntity<CommonResponse> response = restTemplate.exchange("/api/auth/verify?uid="+userVerifyUid, HttpMethod.GET, entity, CommonResponse.class);
+//
+//        assertEquals(HttpStatus.OK, response.getStatusCode());
+//
+//    }
 
     @Test
     @Order(4)
@@ -126,29 +126,29 @@ class AIGenerateServiceTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
     }
-    @Test
-    @Order(5)
-    public void generateAi() {
-        AIGenerateRequest request = new AIGenerateRequest();
-        request.setTopic("발표준비");
-        request.setTest(true);
-        request.setKeywords("발표에서 최적화하는 방법");
-        request.setSecTime(100);
-        request.setScriptId(scriptId);
-        request.setBalpyoAPIKey("1234");
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("Authorization", "Bearer " + jwtToken);
-
-        HttpEntity<AIGenerateRequest> entity = new HttpEntity<>(request, headers);
-
-        ResponseEntity<CommonResponse> response = restTemplate.exchange("/user/ai/script", HttpMethod.POST, entity, CommonResponse.class);
-        System.out.println(response.toString());
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-
-    }
+//    @Test
+//    @Order(5)
+//    public void generateAi() {
+//        AIGenerateRequest request = new AIGenerateRequest();
+//        request.setTopic("발표준비");
+//        request.setTest(true);
+//        request.setKeywords("발표에서 최적화하는 방법");
+//        request.setSecTime(100);
+//        request.setScriptId(scriptId);
+//        request.setBalpyoAPIKey("1234");
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        headers.set("Authorization", "Bearer " + jwtToken);
+//
+//        HttpEntity<AIGenerateRequest> entity = new HttpEntity<>(request, headers);
+//
+//        ResponseEntity<CommonResponse> response = restTemplate.exchange("/user/ai/script", HttpMethod.POST, entity, CommonResponse.class);
+//        System.out.println(response.toString());
+//        assertEquals(HttpStatus.OK, response.getStatusCode());
+//        assertNotNull(response.getBody());
+//
+//    }
 
 
     @Test

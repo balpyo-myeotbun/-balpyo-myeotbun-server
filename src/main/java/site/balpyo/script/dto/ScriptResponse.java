@@ -1,5 +1,6 @@
 package site.balpyo.script.dto;
 
+import jakarta.persistence.Column;
 import lombok.*;
 import site.balpyo.script.entity.Tag;
 
@@ -24,5 +25,15 @@ public class ScriptResponse {
         private boolean isGenerating;
         private boolean useAi;
         private Set<String> tag;
+
+
+
+        private String filePath;
+        private Integer playTime;
+        private String speechMark;
+        private String originalScript;//원본대본
+        private Integer speed;
+
+
 
 }

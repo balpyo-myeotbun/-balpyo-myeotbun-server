@@ -61,4 +61,21 @@ public class ScriptEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    @Column
+    private String filePath;
+
+    @Column
+    private Integer playTime;
+
+    @Column
+    private String speechMark;
+
+    @Column
+    private String originalScript;//원본대본
+
+    @Column
+    private Integer speed;
+
+
 }

@@ -84,6 +84,7 @@ public class ScriptService {
                 .tag(insertedScriptEntity.getTags().stream()
                         .map(tag -> tag.getTag().toString())
                         .collect(Collectors.toSet()))
+
                 .build();
 
         System.out.println(insertedScriptEntity.getTags().toString());
@@ -116,6 +117,11 @@ public class ScriptService {
                             .map(tag -> tag.getTag().toString())
                             .collect(Collectors.toSet())
                     )
+                    .originalScript(scriptEntity.getOriginalScript())
+                    .speechMark(scriptEntity.getSpeechMark())
+                    .filePath(scriptEntity.getFilePath())
+                    .speed(scriptEntity.getSpeed())
+                    .playTime(scriptEntity.getPlayTime())
                     .build();
 
             scriptResponses.add(scriptResponse);

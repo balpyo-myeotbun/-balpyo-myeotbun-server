@@ -2,7 +2,7 @@ package site.balpyo.auth.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import site.balpyo.auth.EmailConfig;
 import site.balpyo.auth.dto.request.LoginRequest;
 import site.balpyo.auth.dto.request.SignupRequest;
@@ -153,6 +154,53 @@ public class AuthController {
             return CommonResponse.success("");
         }else{
             return CommonResponse.error(ErrorEnum.GUEST_NOT_FOUND);
+        }
+    }
+
+    @GetMapping("/kakao")
+    public ResponseEntity<?> kakaoLogin(@RequestParam String accessToken) {
+        String userInfoUrl = "https://kapi.kakao.com/v2/user/me";
+
+        // HTTP 요청을 통해 사용자 정보를 조회
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, entity, String.class);
+
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            String userInfo = response.getBody();
+            return ResponseEntity.ok(userInfo);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    @GetMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestParam String accessToken) {
+        // 구글 사용자 정보 API URL
+        String userInfoUrl = "https://www.googleapis.com/oauth2/v3/userinfo";
+
+        // 액세스 토큰을 헤더에 포함하여 요청
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        // 사용자 정보 요청
+        ResponseEntity<String> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, entity, String.class);
+
+        // 사용자 정보 처리
+        if (response.getStatusCode() == HttpStatus.OK) {
+            String userInfo = response.getBody();
+            // 응답을 처리하거나 사용자를 등록
+            return ResponseEntity.ok(userInfo); // 사용자 정보를 반환하거나, 응답 처리
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 
